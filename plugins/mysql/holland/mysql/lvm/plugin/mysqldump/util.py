@@ -8,10 +8,10 @@ from holland.core.util.fmt import format_bytes
 from holland.lib.mysql import PassiveMySQLClient, MySQLError, \
                               build_mysql_config, connect
 from holland.lib.lvm import Snapshot, parse_bytes
-from holland.backup.mysql_lvm.actions import FlushAndLockMySQLAction, \
+from holland.mysql.lvm.actions import FlushAndLockMySQLAction, \
                                              RecordMySQLReplicationAction, \
                                              MySQLDumpDispatchAction
-from holland.backup.mysql_lvm.plugin.common import log_final_snapshot_size
+from holland.mysql.lvm.plugin.common import log_final_snapshot_size
 LOG = logging.getLogger(__name__)
 
 def setup_actions(snapshot, config, client, datadir, spooldir, plugin):

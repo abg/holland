@@ -4,11 +4,11 @@ import shutil
 import tempfile
 import logging
 from holland.core import open_stream
-from holland.backup.mysql_lvm.actions import FlushAndLockMySQLAction, \
+from holland.mysql.lvm.actions import FlushAndLockMySQLAction, \
                                              RecordMySQLReplicationAction, \
                                              InnodbRecoveryAction, \
                                              TarArchiveAction
-from holland.backup.mysql_lvm.plugin.common import log_final_snapshot_size
+from holland.mysql.lvm.plugin.common import log_final_snapshot_size
 
 LOG = logging.getLogger(__name__)
 

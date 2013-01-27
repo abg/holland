@@ -1,16 +1,15 @@
 """MySQL LVM snapshot backups"""
 
 import os
-import tempfile
 import logging
-from holland.core import BackupPlugin, BackupError, Configspec, load_plugin
+from holland.core import BackupError, BackupPlugin, Configspec
 from holland.core.util import directory_size
 from holland.lib.lvm import LogicalVolume, CallbackFailuresError, \
                             LVMCommandError, relpath, getmount
 from holland.lib.mysql.client import MySQLError
-from holland.backup.mysql_lvm.plugin.common import build_snapshot, \
+from holland.mysql.lvm.plugin.common import build_snapshot, \
                                                    connect_simple
-from holland.backup.mysql_lvm.plugin.mysqldump.util import setup_actions
+from holland.mysql.lvm.plugin.raw.util import setup_actions
 
 LOG = logging.getLogger(__name__)
 
@@ -25,6 +24,9 @@ snapshot-size = string(default=None)
 # default: temporary directory
 snapshot-mountpoint = string(default=None)
 
+# default: no
+innodb-recovery = boolean(default=no)
+
 # default: flush tables with read lock by default
 lock-tables = boolean(default=yes)
 
@@ -36,56 +38,79 @@ extra-flush-tables = boolean(default=yes)
 mysqld-exe              = force_list(default=list('mysqld', '/usr/libexec/mysqld'))
 user                    = string(default='mysql')
 innodb-buffer-pool-size = string(default=128M)
-key-buffer-size         = string(default=16M)
 tmpdir                  = string(default=None)
 
+[tar]
+exclude = force_list(default='mysql.sock')
+
+[compression]
+method = option('none', 'gzip', 'pigz', 'bzip2', 'lzop', default='gzip')
+level = integer(min=0, max=9, default=1)
+
+[mysql:client]
+# default: ~/.my.cnf
+defaults-file = string(default='~/.my.cnf')
+defaults-extra-file = force_list(default=list('~/.my.cnf'))
+
+# default: current user
+user = string(default=None)
+
+# default: none
+password = string(default=None)
+
+# default: localhost
+host = string(default=None)
+
+# default: 3306
+port = integer(default=None)
+# default: none
+socket = string(default=None)
 """
 
-class MysqlDumpLVMBackup(BackupPlugin):
+class MysqlLVMBackup(BackupPlugin):
     """A Holland Backup plugin suitable for performing LVM snapshots of a
     filesystem underlying a live MySQL instance.
 
-    This plugin runs mysqldump against an instance of mysqld whose datadir
-    is located on an LVM snapshot volume.
+    This plugin produces tar archives of a MySQL data directory.
     """
     CONFIGSPEC = CONFIGSPEC
 
-    def __init__(self, name):
-        self.name = name
-        self.client = None
-        self.mysqldump_plugin = None
-
     def pre(self):
         self.client = connect_simple(self.config['mysql:client'])
-        self.mysqldump_plugin = load_plugin('holland.backup', 'mysqldump')
-        self.mysqldump_plugin.configure(self.config)
-        self.mysqldump_plugin.setup(self.store)
-        self.mysqldump_plugin.pre()
 
     def estimate(self):
         """Estimate the backup size this plugin will produce
 
-        This returns the estimate from the mysqldump plugin
+        This is currently the total directory size of the MySQL datadir
         """
-        return self.mysqldump_plugin.estimate()
+        try:
+            self.client.connect()
+            datadir = self.client.show_variable('datadir')
+            self.client.disconnect()
+        except MySQLError, exc:
+            raise BackupError("[%d] %s" % exc.args)
+        return directory_size(datadir)
 
     def configspec(self):
         """INI Spec for the configuration values this plugin supports"""
-        spec = load_plugin('holland.backup', 'mysqldump').configspec()
-        spec.merge(Configspec.from_string(self.CONFIGSPEC))
-        return spec
+        return Configspec.from_string(self.CONFIGSPEC)
 
     def backup(self):
         """Run a backup by running through a LVM snapshot against the device
         the MySQL datadir resides on
         """
         # connect to mysql and lookup what we're supposed to snapshot
-        self.client.connect()
-        datadir = os.path.realpath(self.client.show_variable('datadir'))
+        try:
+            self.client.connect()
+            datadir = os.path.realpath(self.client.show_variable('datadir'))
+        except MySQLError, exc:
+            raise BackupError("[%d] %s" % exc.args)
+
         LOG.info("Backing up %s via snapshot", datadir)
         # lookup the logical volume mysql's datadir sits on
+
         try:
-             volume = LogicalVolume.lookup_from_fspath(datadir)
+            volume = LogicalVolume.lookup_from_fspath(datadir)
         except LookupError, exc:
             raise BackupError("Failed to lookup logical volume for %s: %s" %
                               (datadir, str(exc)))
@@ -99,9 +124,8 @@ class MysqlDumpLVMBackup(BackupPlugin):
         setup_actions(snapshot=snapshot,
                       config=self.config,
                       client=self.client,
-                      datadir=snap_datadir,
-                      spooldir=self.store.path,
-                      plugin=self.mysqldump_plugin)
+                      snap_datadir=snap_datadir,
+                      spooldir=self.store.path)
 
         try:
             snapshot.start(volume)
@@ -109,16 +133,36 @@ class MysqlDumpLVMBackup(BackupPlugin):
             # XXX: one of our actions failed.  Log this better
             for callback, error in exc.errors:
                 LOG.error("%s", error)
-            raise BackupError("Error occurred during snapshot process. Aborting.")
+            raise BackupError("Error occurred during snapshot process. "
+                              "Aborting.")
         except LVMCommandError, exc:
             # Something failed in the snapshot process
-            raise BackupError(exc)
+            raise BackupError(str(exc))
+
+    def dryrun(self):
+        """Implement dry-run for LVM snapshots."""
+        # connect to mysql and lookup what we're supposed to snapshot
+        try:
+            self.client.connect()
+            datadir = os.path.realpath(self.client.show_variable('datadir'))
+        except MySQLError, exc:
+            raise BackupError("[%d] %s" % exc.args)
+        try:
+            volume = LogicalVolume.lookup_from_fspath(datadir)
+        except LookupError, exc:
+            raise BackupError("Failed to lookup logical volume for %s: %s" %
+                              (datadir, str(exc)))
+        LOG.info("[dry-run] Snapshotting %s/%s to %s/%s_snapshot",
+             volume.vg_name,
+             volume.lv_name,
+             volume.vg_name,
+             volume.lv_name)
 
     def plugin_info(self):
         return dict(
-            name='mysqldump-lvm',
-            summary='mysqldump backups off an LVM snapshot',
-            author='Rackspace',
+            name='mysql-lvm',
+            summary='LVM snapshot backups for MySQL',
+            description='',
             version='1.1',
-            api_version='1.1.0',
+            api_version='1.1.0'
         )

@@ -12,28 +12,20 @@ Plugin descriptions
 
 Here are brief descriptions of each of the plugins.  Please see the README
 located under each plugin for more specific information or see documentation
-at http://hollandbackup.org
+at http://docs.hollandbackup.org
 
-holland.lib.common - General purpose functionality such as compression and 
-                     archiving.
+common - General purpose functionality such as compression and 
+         archiving.
 
-holland.lib.mysql  - Support for connections to a MySQL instance and generally
-                     interacting with a deployment.
+mysql  - A set of backup plugins and supporting libraries for managing MySQL
+         based backups. Includes several plugins:
+            + mysqldump - mysqldump logical backups
+            + xtrabackup - InnoDB hot backups via xtrabackup
+            + delphini - MySQL Cluster (NDB) based backups
+            + lvm - LVM snapshot mysql backups
 
-holland.lib.lvm    - A simple python API for interacting with LVM.  Primarily
-                     designed to support LVM snapshots for the LVM based backup
-                     plugins.
+pgsql  - A set of backup plugins and supporting libraries for managing
+         PostgreSQL backups.
 
-holland.backup.mysqldump    - A mysqldump based backup plugin for MySQL
-                              Depends: [holland.lib.common, holland.lib.mysql]
-holland.backup.mysql_lvm    - A LVM snapshot based backup plugin for MySQL
-                              Depends: [holland.lib.common, holland.lib.mysql,
-                                        holland.lib.lvm]
-holland.backup.random       - An example plugin that backups up bytes from 
-                              /dev/random
-holland.backup.sqlite       - A backup plugin that produces logical exports 
-                              from sqlite database files.
-                              Depends: [holland.lib.common]
-holland.backup.xtrabackup   - A backup plugin that uses Percona's xtrabackup
-                              utility to perform a raw file copy of MySQL datadir
-                              Depends: [holland.lib.mysql, holland.lib.common]
+lvm    - A simple python API for interacting with LVM.  Primarily
+         designed to support LVM snapshots for the LVM based backup plugins.

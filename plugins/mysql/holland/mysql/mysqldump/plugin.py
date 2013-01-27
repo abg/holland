@@ -1,13 +1,13 @@
-"""holland.backup.mysqldump interface"""
+"""holland.mysql.mysqldump interface"""
 
 import os, sys
 import logging
 from holland.core import BackupError, BackupPlugin, Configspec
 from holland.core.util import parse_bytes
-from holland.backup.mysqldump.mock import MockEnvironment
-from holland.backup.mysqldump.util import *
-from holland.backup.mysqldump.runner import MySQLBackup
-from holland.backup.mysqldump.spec import CONFIGSPEC
+from holland.mysql.mysqldump.mock import MockEnvironment
+from holland.mysql.mysqldump.util import *
+from holland.mysql.mysqldump.runner import MySQLBackup
+from holland.mysql.mysqldump.spec import CONFIGSPEC
 
 LOG = logging.getLogger(__name__)
 

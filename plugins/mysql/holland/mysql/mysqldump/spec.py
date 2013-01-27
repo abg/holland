@@ -1,4 +1,4 @@
-"""holland.backup.mysqldump configspec"""
+"""holland.mysql.mysqldump configspec"""
 
 CONFIGSPEC = """
 [mysqldump]

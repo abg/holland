@@ -1,5 +1,5 @@
 """
-holland.backup.mysqldump.util
+holland.mysql.mysqldump.util
 
 Utility functions to support mysqldump backups
 

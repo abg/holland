@@ -1,3 +1,3 @@
-from holland.backup.mysqldump.plugin import MySQLDumpPlugin, CONFIGSPEC
+from holland.mysql.mysqldump.plugin import MySQLDumpPlugin, CONFIGSPEC
 
 provider = MySQLDumpPlugin

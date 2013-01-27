@@ -1,5 +1,5 @@
 """
-holland.backup.mysqldump.runner
+holland.mysql.mysqldump.runner
 
 Run mysqldump command lines
 

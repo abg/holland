@@ -25,7 +25,7 @@ setup(name='holland.backup.mysqldump',
       entry_points="""
       [holland.backup]
       mysqldump = holland.backup.mysqldump:provider
-
+      xtrabackup = holland.backup.xtrabackup:XtrabackupPlugin
       [holland.hooks]
       mysql-select = holland.lib.mysqldump:MySQLSelectHook
       """,

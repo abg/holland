@@ -24,7 +24,8 @@ setup(name='holland.backup.sqlite',
       ],
       entry_points="""
       [holland.backup]
-      sqlite = holland.backup.sqlite:SQLitePlugin
+      sqlite = holland.example.sqlite:SQLitePlugin
+      random = holland.example.random:RandomPlugin
       """,
       namespace_packages=['holland', 'holland.backup'],
     )

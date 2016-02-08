@@ -24,7 +24,6 @@
 %bcond_with     tests
 %bcond_with     example
 %bcond_with     sphinxdocs
-%bcond_with     mysqlhotcopy
 %bcond_with     maatkit
 %bcond_without  pgdump
 %bcond_without  sqlite
@@ -100,19 +99,6 @@ Requires: %{name} = %{version}-%{release} %{name}-common = %{version}-%{release}
 %description mysqldump
 This plugin allows holland to perform logical backups of a MySQL database
 using the mysqldump command.
-
-%if %{with mysqlhotcopy}
-%package mysqlhotcopy
-Summary: Raw non-transactional backup plugin for Holland
-License: GPLv2
-Group: Development/Libraries
-Requires: %{name} = %{version}-%{release} %{name}-common = %{version}-%{release}
-
-%description mysqlhotcopy
-This plugin allows holland to perform backups of MyISAM and other
-non-transactional table types in MySQL by issuing a table lock and copying the
-raw files from the data directory.
-%endif
 
 %package mysqllvm
 Summary: Holland LVM snapshot backup plugin for MySQL
@@ -233,13 +219,6 @@ cd plugins/holland.backup.mysqldump
 %{__python} setup.py build
 cd -
 
-%if %{with mysqlhotcopy}
-# plugin : holland.backup.mysqlhotcopy
-cd plugins/holland.backup.mysqlhotcopy
-%{__python} setup.py build
-cd -
-%endif
-
 # plugin : holland.backup.mysql_lvm
 cd plugins/holland.backup.mysql_lvm
 %{__python} setup.py build
@@ -328,15 +307,6 @@ cd plugins/holland.backup.mysqldump
 cd -
 install -m 0640 config/providers/mysqldump.conf %{buildroot}%{_sysconfdir}/holland/providers/
 
-%if %{with mysqlhotcopy}
-# plugin : holland.backup.mysqlhotcopy
-cd plugins/holland.backup.mysqlhotcopy
-%{__python} setup.py install -O1 --skip-build --root %{buildroot}
-install -c -m 0644 docs/man/holland-mysqlhotcopy.5 \
-                   %{buildroot}%{_mandir}/man5
-cd -
-install -m 0640 config/providers/mysqlhotcopy.conf %{buildroot}%{_sysconfdir}/holland/providers/
-%endif
 
 # plugin : holland.backup.mysql_lvm
 cd plugins/holland.backup.mysql_lvm
@@ -490,17 +460,6 @@ rm -rf %{buildroot}
 %{python_sitelib}/holland.lib.lvm-%{version}-*.egg-info
 %config(noreplace) %{_sysconfdir}/holland/providers/mysql-lvm.conf
 %config(noreplace) %{_sysconfdir}/holland/providers/mysqldump-lvm.conf
-
-%if %{with mysqlhotcopy}
-%files mysqlhotcopy
-%defattr(-,root,root,-)
-%doc plugins/holland.backup.mysqlhotcopy/{README,LICENSE}
-%{python_sitelib}/holland/backup/mysqlhotcopy.py*
-%{python_sitelib}/holland.backup.mysqlhotcopy-%{version}-*-nspkg.pth
-%{python_sitelib}/holland.backup.mysqlhotcopy-%{version}-*.egg-info
-%config(noreplace) %{_sysconfdir}/holland/providers/mysqlhotcopy.conf
-%{_mandir}/man5/holland-mysqlhotcopy.5*
-%endif
 
 %if %{with pgdump}
 %files pgdump

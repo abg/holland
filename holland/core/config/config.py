@@ -7,12 +7,14 @@ import logging
 from configobj import ConfigObj, Section, flatten_errors, get_extra_values
 from checks import validator
 
+from holland.core import log
+
 LOGGER = logging.getLogger(__name__)
 
 CONFIG_SUFFIX = '.conf'
 
 # Main Holland configspec
-CONFIGSPEC = """
+CONFIGSPEC = ("""
 [holland]
 tmpdir              = string(default=None)
 plugin-dirs         = coerced_list(default=list('/usr/share/holland/plugins'))
@@ -24,7 +26,8 @@ path                = string(default=None)
 [logging]
 level               = logging_level(default='info')
 filename            = string(default=None)
-""".splitlines()
+format              = string(default='%s')
+""" % (log.DEFAULT_LOG_FORMAT,)).splitlines()
 
 class ConfigError(Exception):
     pass

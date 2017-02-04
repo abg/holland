@@ -5,6 +5,7 @@ from holland.core.plugin import iter_entry_points, get_distribution
 from holland.core.util.bootstrap import bootstrap
 from holland.core.command import run
 from holland.core.config.checks import is_logging_level
+from holland.core import log
 
 HOLLAND_VERSION = get_distribution('holland').version
 HOLLAND_BANNER = """
@@ -39,6 +40,9 @@ parser.add_option('-l', '--log-level', type='choice', metavar='<log-level>',
                   choices=['critical', 'error','warning','info', 'debug'],
                   help="Specify the log level. "
                        "One of: critical,error,warning,info,debug")
+parser.add_option('--log-format', '-F', metavar='format',
+                  default=log.DEFAULT_LOG_FORMAT,
+                  help="Specify the logging format. (default: %default)")
 parser.set_defaults(log_level=None,
                     quiet=False,
                     config_file=os.getenv('HOLLAND_CONFIG',
